@@ -6,7 +6,7 @@ Integrantes
 
 ________________________________________
 Video Explicativo
- Enlace al video :
+ Enlace al video :https://youtu.be/r3se1OOeAQ4
 ________________________________________
 Ejercicio 4.2 — Rate Limiter con Cola FIFO
 Objetivo

@@ -1,0 +1,7 @@
+Si el proyecto presenta problemas de compatibilidad con la versión de Go, revisar la versión indicada en go.mod.
+
+Video explicativo del proyecto:
+https://youtu.be/r3se1OOeAQ4
+
+Repositorio GitHub:
+https://github.com/Ernesalon27/taller3-algoritmos
