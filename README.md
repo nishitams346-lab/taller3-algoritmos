@@ -6,9 +6,12 @@ Integrantes
 - Cesar Gomez Chavez
 - Contreras Salcedo Maximo Simon
 
-### Video Explicativo
+### Videos Explicativos
 
-Enlace al video: https://youtu.be/r3se1OOeAQ4
+- Ejercicio 1: https://youtu.be/9n2s8mXo7h0
+- Ejercicio 2: https://youtu.be/r3se1OOeAQ4
+- Ejercicio 3: https://youtu.be/9n2s8mXo7h0
+- Ejercicio 4: https://youtu.be/9n2s8mXo7h0
 
 ## Ejercicio 4.2 — Rate Limiter con Cola FIFO
 
