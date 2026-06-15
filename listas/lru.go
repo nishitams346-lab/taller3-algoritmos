@@ -9,18 +9,18 @@ import (
 	"strconv"
 )
 
-type Nodo struct { 
-	clave	int
-	valor	int
-	prev	*Nodo
-	next	*Nodo
+type Nodo struct {
+	clave int
+	valor int
+	prev  *Nodo
+	next  *Nodo
 }
 
 type LRU struct {
-	cap 	int;
-	mapa 	map[int]*Nodo;
-	head 	*Nodo
-	tail 	*Nodo
+	cap  int
+	mapa map[int]*Nodo
+	head *Nodo
+	tail *Nodo
 }
 
 func (l *LRU) Get(clave int) (int, bool) {
@@ -50,7 +50,7 @@ func (l *LRU) Put(clave, valor int) {
 	} else {
 		if len(l.mapa) >= l.cap {
 			delete(l.mapa, l.tail.clave) // Eliminar del mapa
-			l.eliminar(l.tail) // Eliminar el nodo menos recientemente usado
+			l.eliminar(l.tail)           // Eliminar el nodo menos recientemente usado
 		}
 
 		newNode := &Nodo{
@@ -64,8 +64,8 @@ func (l *LRU) Put(clave, valor int) {
 
 func NewLRU(capacidad int) *LRU {
 	return &LRU{
-		cap: capacidad,
-		mapa: make(map[int]*Nodo),
+		cap:  capacidad,
+		mapa: make(map[int]*Nodo, capacidad),
 	}
 }
 
@@ -98,8 +98,8 @@ func (l *LRU) agregarAlFrente(node *Nodo) {
 
 // Estructura auxiliar para almacenar los registros de rating con su timestamp.
 type RegistroRating struct {
-	movieId 	int
-	timestamp 	int64
+	movieId   int
+	timestamp int64
 }
 
 // Leer el archivo CSV y cargar la secuencia de IDs ordenados por timestamp.
