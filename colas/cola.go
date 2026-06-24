@@ -1,5 +1,3 @@
-// Package colas implementa una cola FIFO con lista enlazada simple
-// y un rate limiter basado en ventana deslizante de timestamps.
 package colas
 
 import (
@@ -10,29 +8,22 @@ import (
 	"time"
 )
 
-// -------------------------------------------------------
-// 1. NODO — elemento interno de la lista enlazada
-// -------------------------------------------------------
+// 1. nodo
 
 type nodo struct {
-	ts   int64 // timestamp Unix (segundos)
+	ts   int64
 	next *nodo
 }
 
-// -------------------------------------------------------
-// 2. COLA FIFO
-// -------------------------------------------------------
+// 2. cola fifo
 
-// Cola es una cola FIFO de timestamps implementada con lista enlazada.
-// head apunta al elemento más antiguo (frente); tail al más nuevo.
-// Complejidad: Enqueue O(1), Dequeue O(1), Front O(1), Len O(1).
 type Cola struct {
 	head *nodo
 	tail *nodo
 	len  int
 }
 
-// Enqueue agrega el timestamp ts al final de la cola. O(1).
+// insertar al final de la cola
 func (c *Cola) Enqueue(ts int64) {
 	n := &nodo{ts: ts}
 	if c.tail != nil {
@@ -45,8 +36,7 @@ func (c *Cola) Enqueue(ts int64) {
 	c.len++
 }
 
-// Dequeue extrae el timestamp del frente de la cola. O(1).
-// Devuelve (0, false) si la cola está vacía.
+// extraer del frente de la cola
 func (c *Cola) Dequeue() (int64, bool) {
 	if c.head == nil {
 		return 0, false
@@ -60,8 +50,7 @@ func (c *Cola) Dequeue() (int64, bool) {
 	return ts, true
 }
 
-// Front devuelve el timestamp del frente sin eliminarlo. O(1).
-// Devuelve (0, false) si la cola está vacía.
+// ver el elemento del frente sin sacarlo
 func (c *Cola) Front() (int64, bool) {
 	if c.head == nil {
 		return 0, false
@@ -69,21 +58,14 @@ func (c *Cola) Front() (int64, bool) {
 	return c.head.ts, true
 }
 
-// Len devuelve la cantidad de elementos en la cola. O(1).
+// obtener cantidad de elementos
 func (c *Cola) Len() int {
 	return c.len
 }
 
-// -------------------------------------------------------
-// 3. RATE LIMITER — ventana deslizante
-// -------------------------------------------------------
+// 3. rate limiter
 
-// PermitirPeticion decide si la petición de ip en el instante ts
-// se acepta bajo la política: máximo M peticiones en los últimos T segundos.
-//
-// Complejidad amortizada O(1) por llamada:
-// cada timestamp se inserta una vez (Enqueue) y se elimina una vez (Dequeue),
-// por lo que el costo total sobre n peticiones es O(n).
+// controlar limite de peticiones con ventana deslizante
 func PermitirPeticion(colas map[string]*Cola, ip string, ts int64, M int, T int64) bool {
 	c, existe := colas[ip]
 	if !existe {
@@ -91,7 +73,7 @@ func PermitirPeticion(colas map[string]*Cola, ip string, ts int64, M int, T int6
 		colas[ip] = c
 	}
 
-	// Descartar del frente los timestamps fuera de la ventana [ts-T, ts]
+	// eliminar registros fuera de la ventana de tiempo
 	limite := ts - T
 	for {
 		frente, ok := c.Front()
@@ -101,61 +83,51 @@ func PermitirPeticion(colas map[string]*Cola, ip string, ts int64, M int, T int6
 		c.Dequeue()
 	}
 
-	// Verificar cupo
+	// validar cupo disponible
 	if c.Len() >= M {
-		return false // RECHAZADA
+		return false
 	}
 
-	// Registrar esta petición y aceptar
+	// registrar nueva peticion
 	c.Enqueue(ts)
 	return true
 }
 
-// -------------------------------------------------------
-// 4. PARSEO DE LÍNEA — formato Apache Common Log
-// -------------------------------------------------------
+// 4. parseo de linea
 
-// Registro representa una línea del log ya parseada.
 type Registro struct {
 	IP string
 	TS int64
 }
 
-// ParsearLinea extrae la IP y el timestamp de una línea en formato Apache:
-// 127.0.0.1 - frank [10/Oct/2000:13:55:36 -0700] "GET /..." 200 2326
-// Devuelve error si la línea no tiene el formato esperado.
+// extraer ip y timestamp de una linea de log apache
 func ParsearLinea(linea string) (ip string, ts int64, err error) {
 	partes := strings.Fields(linea)
 	if len(partes) < 4 {
-		return "", 0, fmt.Errorf("línea inválida: %q", linea)
+		return "", 0, fmt.Errorf("linea invalida: %q", linea)
 	}
 
 	ip = partes[0]
 
-	// El timestamp está en partes[3], e.g. [10/Oct/2000:13:55:36
+	// limpiar y procesar fecha
 	fechaRaw := strings.TrimPrefix(partes[3], "[")
 	t, errT := time.Parse("02/Jan/2006:15:04:05", fechaRaw)
 	if errT != nil {
-		return "", 0, fmt.Errorf("timestamp inválido %q: %w", fechaRaw, errT)
+		return "", 0, fmt.Errorf("timestamp invalido %q: %w", fechaRaw, errT)
 	}
 
 	return ip, t.Unix(), nil
 }
 
-// -------------------------------------------------------
-// 5. PROCESAMIENTO DEL LOG COMPLETO
-// -------------------------------------------------------
+// 5. procesamiento del log completo
 
-// Resultado almacena el resumen global tras procesar el log.
 type Resultado struct {
 	TotalPeticiones int
 	TotalRechazos   int
 	RechazosPorIP   map[string]int
 }
 
-// ProcesarLog lee el archivo en ruta, aplica el rate limiter con parámetros M y T,
-// imprime las primeras muestra decisiones y devuelve el resumen global.
-// Complejidad total: O(n) siendo n el número de líneas del log.
+// procesar archivo, aplicar limites y generar resumen
 func ProcesarLog(ruta string, M int, T int64, muestra int) (Resultado, error) {
 	f, err := os.Open(ruta)
 	if err != nil {
@@ -172,7 +144,7 @@ func ProcesarLog(ruta string, M int, T int64, muestra int) (Resultado, error) {
 		linea := scanner.Text()
 		ip, ts, err := ParsearLinea(linea)
 		if err != nil {
-			continue // saltar líneas mal formadas
+			continue
 		}
 
 		totalPeticiones++
@@ -183,6 +155,7 @@ func ProcesarLog(ruta string, M int, T int64, muestra int) (Resultado, error) {
 			rechazosPorIP[ip]++
 		}
 
+		// mostrar las primeras decisiones en consola
 		if mostradas < muestra {
 			estado := "ACEPTADA "
 			if !aceptada {

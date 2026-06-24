@@ -4,11 +4,9 @@ import (
 	"testing"
 )
 
-// -------------------------------------------------------
-// Tests de la Cola
-// -------------------------------------------------------
+// tests de la cola
 
-// TestColaFIFO verifica que los elementos salen en orden FIFO.
+// test fifo
 func TestColaFIFO(t *testing.T) {
 	c := &Cola{}
 	c.Enqueue(100)
@@ -23,36 +21,36 @@ func TestColaFIFO(t *testing.T) {
 	}
 }
 
-// TestColaVacia verifica que Dequeue en cola vacía devuelve false.
+// comprueba comportamiento en cola vacia
 func TestColaVacia(t *testing.T) {
 	c := &Cola{}
 	_, ok := c.Dequeue()
 	if ok {
-		t.Error("Dequeue en cola vacía debería devolver false")
+		t.Error("dequeue en cola vacia deberia devolver false")
 	}
 	_, ok = c.Front()
 	if ok {
-		t.Error("Front en cola vacía debería devolver false")
+		t.Error("front en cola vacia deberia devolver false")
 	}
 }
 
-// TestColaUnElemento verifica el caso límite de un solo elemento.
+// caso limite cola con un unico elemento
 func TestColaUnElemento(t *testing.T) {
 	c := &Cola{}
 	c.Enqueue(42)
 	if c.Len() != 1 {
-		t.Errorf("Len esperado 1, obtenido %d", c.Len())
+		t.Errorf("len esperado 1, obtenido %d", c.Len())
 	}
 	v, ok := c.Dequeue()
 	if !ok || v != 42 {
 		t.Errorf("esperaba 42, obtuve %d", v)
 	}
 	if c.Len() != 0 {
-		t.Errorf("Len esperado 0 tras Dequeue, obtenido %d", c.Len())
+		t.Errorf("len esperado 0 tras dequeue, obtenido %d", c.Len())
 	}
 }
 
-// TestFront verifica que Front no modifica la cola.
+// verifica que front no elimine elementos
 func TestFront(t *testing.T) {
 	c := &Cola{}
 	c.Enqueue(10)
@@ -60,18 +58,16 @@ func TestFront(t *testing.T) {
 
 	f, ok := c.Front()
 	if !ok || f != 10 {
-		t.Errorf("Front esperaba 10, obtuvo %d", f)
+		t.Errorf("front esperaba 10, obtuvo %d", f)
 	}
 	if c.Len() != 2 {
-		t.Error("Front no debería modificar el tamaño de la cola")
+		t.Error("front no deberia modificar el tamano de la cola")
 	}
 }
 
-// -------------------------------------------------------
-// Tests del Rate Limiter
-// -------------------------------------------------------
+// tests del rate limiter
 
-// TestPermitirPeticionLimite verifica que la petición M+1 se rechaza.
+// bloquear peticiones que superen el limite maximo (m)
 func TestPermitirPeticionLimite(t *testing.T) {
 	colasIP := make(map[string]*Cola)
 	ip := "1.2.3.4"
@@ -80,57 +76,57 @@ func TestPermitirPeticionLimite(t *testing.T) {
 
 	for i := 0; i < M; i++ {
 		if !PermitirPeticion(colasIP, ip, ts, M, T) {
-			t.Errorf("petición %d debería aceptarse", i+1)
+			t.Errorf("peticion %d deberia aceptarse", i+1)
 		}
 	}
 	if PermitirPeticion(colasIP, ip, ts, M, T) {
-		t.Error("la petición M+1 debería rechazarse")
+		t.Error("la peticion m+1 deberia rechazarse")
 	}
 }
 
-// TestVentanaDeslizante verifica que los timestamps viejos expiran y se vuelve a aceptar.
+// expirar registros viejos al pasar el tiempo de la ventana (t)
 func TestVentanaDeslizante(t *testing.T) {
 	colasIP := make(map[string]*Cola)
 	ip := "5.6.7.8"
 	M, T := 2, int64(10)
 
-	// Llena la ventana en t=0
+	// llena la ventana en t=0
 	PermitirPeticion(colasIP, ip, 0, M, T)
 	PermitirPeticion(colasIP, ip, 0, M, T)
 
-	// En t=5 sigue llena
+	// en t=5 sigue llena
 	if PermitirPeticion(colasIP, ip, 5, M, T) {
-		t.Error("debería rechazarse en t=5 (ventana llena)")
+		t.Error("deberia rechazarse en t=5 (ventana llena)")
 	}
 
-	// En t=11 los timestamps de t=0 expiraron → se acepta
+	// en t=11 expiro t=0, vuelve a aceptar
 	if !PermitirPeticion(colasIP, ip, 11, M, T) {
-		t.Error("debería aceptarse en t=11 (timestamps expirados)")
+		t.Error("deberia aceptarse en t=11 (timestamps expirados)")
 	}
 }
 
-// TestIPsIndependientes verifica que cada IP tiene su propia cola.
+// validar que los limites apliquen por separado para cada ip
 func TestIPsIndependientes(t *testing.T) {
 	colasIP := make(map[string]*Cola)
 	M, T := 1, int64(60)
 	ts := int64(1000)
 
 	if !PermitirPeticion(colasIP, "a.a.a.a", ts, M, T) {
-		t.Error("primera petición de IP A debería aceptarse")
+		t.Error("primera peticion de ip a deberia aceptarse")
 	}
 	if !PermitirPeticion(colasIP, "b.b.b.b", ts, M, T) {
-		t.Error("primera petición de IP B debería aceptarse")
+		t.Error("primera peticion de ip b deberia aceptarse")
 	}
 	if PermitirPeticion(colasIP, "a.a.a.a", ts, M, T) {
-		t.Error("segunda petición de IP A debería rechazarse")
+		t.Error("segunda peticion de ip a deberia rechazarse")
 	}
 }
 
 // -------------------------------------------------------
-// Tests del Parser
+// tests del parser
 // -------------------------------------------------------
 
-// TestParsearLineaOK verifica una línea Apache válida.
+// procesar log valido en formato apache
 func TestParsearLineaOK(t *testing.T) {
 	linea := `83.149.9.216 - - [17/May/2015:10:05:03 +0000] "GET /presentations HTTP/1.1" 200 5678`
 	ip, ts, err := ParsearLinea(linea)
@@ -138,26 +134,24 @@ func TestParsearLineaOK(t *testing.T) {
 		t.Fatalf("error inesperado: %v", err)
 	}
 	if ip != "83.149.9.216" {
-		t.Errorf("IP esperada 83.149.9.216, obtenida %s", ip)
+		t.Errorf("ip esperada 83.149.9.216, obtenida %s", ip)
 	}
 	if ts <= 0 {
 		t.Errorf("timestamp debe ser positivo, obtenido %d", ts)
 	}
 }
 
-// TestParsearLineaInvalida verifica que una línea malformada devuelve error.
+// controlar error en logs malformados
 func TestParsearLineaInvalida(t *testing.T) {
 	_, _, err := ParsearLinea("esto no es un log")
 	if err == nil {
-		t.Error("se esperaba error con línea inválida")
+		t.Error("se esperaba error con linea invalida")
 	}
 }
 
-// -------------------------------------------------------
-// Benchmarks
-// -------------------------------------------------------
+// benchmarks
 
-// BenchmarkEnqueueDequeue mide el costo de una operación Enqueue+Dequeue. Esperado: O(1).
+// rendimiento de insercion y extraccion
 func BenchmarkEnqueueDequeue(b *testing.B) {
 	c := &Cola{}
 	for i := 0; i < b.N; i++ {
@@ -166,7 +160,7 @@ func BenchmarkEnqueueDequeue(b *testing.B) {
 	}
 }
 
-// BenchmarkPermitirPeticion mide el costo del rate limiter con ventana activa. Esperado: O(1) amortizado.
+// rendimiento del limitador con carga continua
 func BenchmarkPermitirPeticion(b *testing.B) {
 	colasIP := make(map[string]*Cola)
 	M, T := 100, int64(60)

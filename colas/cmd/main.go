@@ -1,5 +1,3 @@
-// Ejecutable principal del ejercicio 4.2 — Rate Limiter
-// Uso: go run ./colas/cmd/ <ruta_log> <M> <T_segundos>
 package main
 
 import (
@@ -35,14 +33,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Resumen global
+	// resumen global
 	fmt.Printf("\n--- Resumen global ---\n")
 	fmt.Printf("Total peticiones : %d\n", res.TotalPeticiones)
 	fmt.Printf("Total rechazos   : %d (%.1f%%)\n",
 		res.TotalRechazos,
 		100*float64(res.TotalRechazos)/float64(res.TotalPeticiones))
 
-	// Top 5 IPs con más rechazos
+	// top 5 ips con mas rechazos
 	type ipCount struct {
 		ip    string
 		count int
