@@ -8,7 +8,7 @@ Integrantes
 
 ### Videos Explicativos
 
-- Ejercicio 1: pendiente
+- Ejercicio 1: https://youtu.be/Agz3JaN-qMg 
 - Ejercicio 2: https://youtu.be/r3se1OOeAQ4
 - Ejercicio 3: https://youtu.be/ACihE3TRW40
 - Ejercicio 4: pendiente
